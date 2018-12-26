@@ -1,9 +1,9 @@
 #include<simple_layers/simple_layer.h>
 #include <pluginlib/class_list_macros.h>
-#include <sensor_msgs/LaserScan.h>
 
 PLUGINLIB_EXPORT_CLASS(simple_layer_namespace::SimpleLayer, costmap_2d::Layer)
 
+/*
 void scanCallback(const sensor_msgs::LaserScan::ConstPtr& msg)
 {
   size_t i=0;
@@ -121,6 +121,7 @@ int main(int argc, char** argv)
   ros::spin();
   return 0;
 }
+*/
 
 using costmap_2d::LETHAL_OBSTACLE;
 
@@ -128,16 +129,32 @@ namespace simple_layer_namespace
 {
 
 SimpleLayer::SimpleLayer() {}
+SimpleLayer::~SimpleLayer()
+{
+  sub.shutdown();
+}
+
+void SimpleLayer::laserScanCallback(const sensor_msgs::LaserScanConstPtr& msg)
+{
+  std::cout << "test" << std::endl;
+  //simple_layer.hの中でメンバ変数として定義したdan_rx配列の中に適当な値を突っ込む（テスト用）
+  //ここでメンバ変数に入れた値をupdateBoundsやupdateCostsで使う
+  for (int i = 0; i < 100; i++) {
+    dan_rx[i] = i;
+  }
+}
 
 void SimpleLayer::onInitialize()
 {
-  ros::NodeHandle nh("~/" + name_);
+  ros::NodeHandle nh("~/" + name_), g_nh;
   current_ = true;
-
+  
   dsrv_ = new dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig>(nh);
   dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig>::CallbackType cb = boost::bind(
       &SimpleLayer::reconfigureCB, this, _1, _2);
   dsrv_->setCallback(cb);
+
+  sub = g_nh.subscribe("/scan", 1, &SimpleLayer::laserScanCallback, this);
 }
 
 
